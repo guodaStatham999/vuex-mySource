@@ -17,6 +17,13 @@ class Store{
 
         // vuex 里面有个比较重要的api   => replaceState :官网解释=>替换 store 的根状态，仅用状态合并或时光旅行调试。 
     }
+
+    get state(){
+        return this._state.data;
+    }
+
+
+
     install(app,injectKey){ // use的时候会触发这个install方法, createApp().use(store,'my命名空间')
         // console.log(app);
         // console.log(injectKey);
