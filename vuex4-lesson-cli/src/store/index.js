@@ -3,7 +3,7 @@ import { createStore } from '@/vuex'
 export default createStore({
   strict:true,
   state: { // 组件中的data
-    count:0
+    count:1
   },
   getters: { // vuex4没有实现这个功能
     double(state){
