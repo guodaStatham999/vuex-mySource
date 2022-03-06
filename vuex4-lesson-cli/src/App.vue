@@ -17,6 +17,7 @@
   function add(){
     store.commit('add',3)
   }
+  
   function asyncAdd(){
     store.dispatch('asyncAdd',10)
   }
