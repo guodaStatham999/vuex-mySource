@@ -5,7 +5,19 @@
     <button @click="$store.state.count++">错误增加</button>
     <button @click="add">增加</button>
     <button @click="asyncAdd">异步增加</button>
-    {{$store.a}}
+    <!-- {{$store.a}} -->
+
+
+
+  // 下面是modules部分
+    <hr>
+    <!-- aCount模块:
+    {{store.state.aCount.count}}
+    bCount模块:
+    {{store.state.bCount.count}}
+
+        <button @click="$store.commit('aCount/add',33)">增加aCount/count参数</button>
+    <button  @click="$store.commit('bCount/add',33)">增加bCount/count参数</button> -->
   </div>
 </template>
 
