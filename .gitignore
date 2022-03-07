@@ -5,6 +5,7 @@ node_modules/*
 */node_modules
 # /node_modules
 /dist
+vue-topic
 
 
 # local env files
