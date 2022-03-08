@@ -1,9 +1,10 @@
 import { createStore } from '@/vuex'
 
 export default createStore({
-  strict: true,
+  // strict: true,
   state: { // 组件中的data
-    count: '外层'
+    count: 1,
+    depict: '外层'
   },
   getters: { // vuex4没有实现这个功能
     double(state) {
@@ -17,15 +18,18 @@ export default createStore({
   },
   actions: {
     asyncAdd({ commit }, payload) {
-      setTimeout(() => {
-        commit('add', payload)
-      }, 1000)
+      return new Promise((resolve,reject)=>{
+        setTimeout(()=>{
+          resolve()
+          commit('add', payload)
+        },1000)
+      }) 
     }
   },
   modules: {
-    aCount: {
+    aSonCount: {
       namespaced: true,
-      state: { count: '儿子1' },
+      state: { count: 10, depict:'儿子1' },
       mutations: {
           add(state, payload) {
               state.count += payload
@@ -33,7 +37,7 @@ export default createStore({
       },
       modules: {
           cCount: {
-              state: { count: '孙子1' },
+              state: { cGrandsonCount: 100,depict:'孙子1' },
               mutations: {
                   add(state, payload) {
                       state.count += payload
@@ -42,11 +46,12 @@ export default createStore({
           }
       }
   },
-    bCount: {
+    bSonCount: {
       namespaced:true,
 
       state: {
-        count: '儿子2'
+        count: 20,
+        depict:'儿子2'
       },
       mutations: {
         add(state, payload) {

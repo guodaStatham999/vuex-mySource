@@ -9,3 +9,10 @@ export function forEachValue(obj, fn) {
 
 //     // 在每个函数拿到对象的key/value
 //  })
+
+
+
+
+export function isPromise(val) {
+    return val && typeof val.then === 'function '
+}

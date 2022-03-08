@@ -1,15 +1,15 @@
 <template>
   <div>
-    计数器:{{store.state.count}}
-    double:{{store.getters.double}}
+    计数器:{{store.state.count}}<hr>
+       double:{{store.getters.double}}
     <button @click="$store.state.count++">错误增加</button>
     <button @click="add">增加</button>
     <button @click="asyncAdd">异步增加</button>
     <!-- {{$store.a}} -->
 
 
-
-  // 下面是modules部分
+  <hr>
+   下面是modules部分
     <hr>
     <!-- aCount模块:
     {{store.state.aCount.count}}
@@ -29,10 +29,13 @@
   function add(){
     store.commit('add',3)
   }
-  
   function asyncAdd(){
-    store.dispatch('asyncAdd',10)
+    store.dispatch('asyncAdd',10).then(()=>{
+      alert('ok')
+    })
   }
+  
+
 </script>
 
 
