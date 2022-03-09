@@ -43,4 +43,15 @@ export default class ModuleCollection{
         
         // console.log(this.root);
     }
+    getNamespaced(path){
+        // 就是树的遍历,每次path都是外层installModule递归出来的路径,所以直接使用就行?
+        // 要循环这个根,沿着向下找
+        let module = this.root; // [a,c] =变成=>'a/c'
+        let name =  path.reduce((namespaceStr,key)=>{
+            module =    module.getChild(key) // 这个是当前模块的子模块,而且要用儿子作为下一次的父亲
+            return  namespaceStr + (module.namespaced? key + '/' : '')
+        },'')
+        console.log(name);
+        return name
+    }
 }

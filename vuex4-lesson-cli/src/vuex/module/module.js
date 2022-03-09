@@ -7,6 +7,7 @@ class Module {
         this._raw = rawModule
         this.state = rawModule.state
         this._children = {}
+        this.namespaced = rawModule.namespaced; // 自己是否有命名空间
     }
 
     addChild(key, module) {
@@ -36,9 +37,6 @@ class Module {
             forEachValue(this._raw.actions,fn)
         }
     }
-
-
-
 
 
 }

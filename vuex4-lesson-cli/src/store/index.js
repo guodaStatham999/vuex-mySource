@@ -37,10 +37,11 @@ export default createStore({
       },
       modules: {
           cCount: {
+            namespaced:true,
               state: { cGrandsonCount: 100,depict:'孙子1' },
               mutations: {
                   add(state, payload) {
-                      state.count += payload
+                      state.cGrandsonCount += payload
                   }
               },
           }

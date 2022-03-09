@@ -36,6 +36,10 @@ function installModule(store, rootState, path, module) { // 安装也是递归�
 
     let isRoot = !path.length; // 如果是空数组,说明是根
 
+    let nameSpaced =   store._modules.getNamespaced(path); // [a,c] 如果当前是c,就取出来a是否有命名空间
+    console.log(nameSpaced);
+
+
     if (!isRoot) {
         // 依旧是刚才的思路,其实就是一个数组取最后一个人参数作为父亲,如果是只有一个参数,就会被截取掉,然后使用默认值,再后面会给父亲的children重新赋值.
         let pathSlice = path.slice(0, -1)
@@ -44,17 +48,18 @@ function installModule(store, rootState, path, module) { // 安装也是递归�
     }
 
 
+    // **下面是挂载处理,相当于把每个人的getter/mutation/action及自己孩子的getter/mutation/action都循环挂载在自己的身上**
 
     // getters处理  => 取到getters
     module.forEachGetter((getter, key) => { // forEachGetter就是原型上的forEachChild改编的?
-        store._wrappedGetters[key] = () => {
+        store._wrappedGetters[nameSpaced+  key] = () => {
             return getter(getNestedState(store.state, path)) // module.state不能直接使用这个值,因为是死值,不是响应式的值.  使用一个函数,每次都获取最新的值
         }
     })
 
     // mutation处理
     module.forEachMutation((mutation, key) => {
-        let entry = store._mutations[key] || (store._mutations[key] = []) // 发布订阅,有就用,没有就是个数组
+        let entry = store._mutations[nameSpaced + key] || (store._mutations[nameSpaced + key] = []) // 发布订阅,有就用,没有就是个数组
         entry.push((payload) => { // store.commit('add',payload) 用户会这么调用这个方法
             mutation.call(store, getNestedState(store.state, path), payload)
         })
@@ -63,7 +68,7 @@ function installModule(store, rootState, path, module) { // 安装也是递归�
     // ***action和mutation有区别*** action执行后,会返回一个promise. 因为调用一般都是async fn  
     // action处理
     module.forEachAction((action, key) => {
-        let entry = store._actions[key] || (store._actions[key] = []) // 发布订阅,有就用,没有就是个数组
+        let entry = store._actions[nameSpaced + key] || (store._actions[nameSpaced + key] = []) // 发布订阅,有就用,没有就是个数组
         entry.push((payload) => { // store.dispatch('add',payload) 用户会这么调用这个方法
             let res = action.call(store, store, payload)
 
@@ -113,7 +118,6 @@ export default class Store {
 
     constructor(options) {
         let store = this;
-
         // { state,getter,mutations,actions,modules }
         store._modules = new ModuleCollection(options); // 格式化为一个树
 
