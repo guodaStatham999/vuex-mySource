@@ -105,21 +105,21 @@ function resetStoreState(store, state) {
         })
     })
 
-    if(store.strict){ // 如果是严格模式,就开启严格模式
+    if (store.strict) { // 如果是严格模式,就开启严格模式
         ebableStrictMode(store)
     }
 }
 
 
-function ebableStrictMode(store){
-    watch(()=>store._state.data,()=>{ 
+function ebableStrictMode(store) {
+    watch(() => store._state.data, () => {
         // 监控store._state.data数据变化,变化后执行第二个函数
         // watch默认监控一层,需要修改参数. watch是异步监控,需要修改参数改为同步
-        console.assert(store._commiting,'do not mutate vuex store state outside mutation handlers-不能在mutate之外修改属性')
+        console.assert(store._commiting, 'do not mutate vuex store state outside mutation handlers-不能在mutate之外修改属性')
 
-    },{
-        deep:true,
-        flush:'sync' // 默认是异步,可以改成同步.  可以做深度监控-默认浅层因为浪费性能
+    }, {
+        deep: true,
+        flush: 'sync' // 默认是异步,可以改成同步.  可以做深度监控-默认浅层因为浪费性能
     })
 }
 
@@ -165,15 +165,40 @@ export default class Store {
 
         // 定义响应式数据
         resetStoreState(store, state);
+
+
+
+
+        store._subscribes = [] // store自身上定义一个属性,用来做发布订阅的数组
+        // 等待store所有状态都创建完毕后,再创建插件,不然插件拿到的都是空数据.
+        // 所以插件在最后
+        options.plugins.forEach(plugin => plugin(store))
+    }
+
+    subscribe(fn) {
+        this._subscribes.push(fn) // 往订阅的数组里放入方法
     }
     get state() {
         return this._state.data
     }
+
+    replaceState(newData) {
+        // 特殊情况下,是不能直接修改状态,会报错. 所以要使用_withCommit包裹一下
+
+        this._withCommit(() => {
+            this._state.data = newData; // 因为前面配置响应式的时候,包裹的是{data},所以此处修改对象里的data属性就可以
+        })
+    }
+
     commit = (type, payload) => {
         let entry = this._mutations[type] || [];
         this._withCommit(() => { // 相当于修改了commiting这个参数为true,执行完后变为false.
             entry.forEach(handler => handler(payload))
         })
+        this._subscribes.forEach(sub => sub({
+            type,
+            payload
+        }, this.state))
     }
     dispatch = (type, payload) => {
         let entry = this._actions[type] || [] // entry可能是多个

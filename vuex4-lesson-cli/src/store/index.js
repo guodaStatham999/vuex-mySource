@@ -1,6 +1,24 @@
 import { createStore } from '@/vuex'
 
+function customPlugin(store){
+  console.log(store);
+  let local =  localStorage.getItem('VUEX:STATE')
+  if(local){
+    store.replaceState(JSON.parse(local))
+  }
+  store.subscribe((mutation,state)=>{ // 每当状态发生变化,(调用mutation的时候,就会执行此回调---错误修改会触发吗?)
+    console.log(mutation,state); // 默认传递俩参数,修改的mutation和当前state
+    localStorage.setItem('VUEX:STATE',JSON.stringify(state))
+  })
+}
+
+
 export default createStore({
+  plugins:[ // vuex插件: 任何插件都是一个函数
+  // 会按照注册的顺序依次执行,从上到下. 执行的时候会把store传递过来
+  // 支持了发布订阅模式---也就是vuex有发布订阅模式
+    customPlugin
+  ],
   strict: true, // 不允许用户非法修改状态,(只能在mutation里修改,否则就会发生异常)
   state: { // 组件中的data
     count: 1,
