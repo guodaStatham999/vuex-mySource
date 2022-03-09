@@ -3,7 +3,8 @@ import {
     forEachValue
 } from './utils'
 import {
-    reactive
+    reactive,
+    watch
 } from 'vue';
 import ModuleCollection from './module/module-collection.js'
 
@@ -36,7 +37,7 @@ function installModule(store, rootState, path, module) { // 安装也是递归�
 
     let isRoot = !path.length; // 如果是空数组,说明是根
 
-    let nameSpaced =   store._modules.getNamespaced(path); // [a,c] 如果当前是c,就取出来a是否有命名空间
+    let nameSpaced = store._modules.getNamespaced(path); // [a,c] 如果当前是c,就取出来a是否有命名空间
     console.log(nameSpaced);
 
 
@@ -52,7 +53,7 @@ function installModule(store, rootState, path, module) { // 安装也是递归�
 
     // getters处理  => 取到getters
     module.forEachGetter((getter, key) => { // forEachGetter就是原型上的forEachChild改编的?
-        store._wrappedGetters[nameSpaced+  key] = () => {
+        store._wrappedGetters[nameSpaced + key] = () => {
             return getter(getNestedState(store.state, path)) // module.state不能直接使用这个值,因为是死值,不是响应式的值.  使用一个函数,每次都获取最新的值
         }
     })
@@ -103,10 +104,24 @@ function resetStoreState(store, state) {
             enumerable: true // 可枚举,是可以看到.
         })
     })
+
+    if(store.strict){ // 如果是严格模式,就开启严格模式
+        ebableStrictMode(store)
+    }
 }
 
 
+function ebableStrictMode(store){
+    watch(()=>store._state.data,()=>{ 
+        // 监控store._state.data数据变化,变化后执行第二个函数
+        // watch默认监控一层,需要修改参数. watch是异步监控,需要修改参数改为同步
+        console.assert(store._commiting,'do not mutate vuex store state outside mutation handlers-不能在mutate之外修改属性')
 
+    },{
+        deep:true,
+        flush:'sync' // 默认是异步,可以改成同步.  可以做深度监控-默认浅层因为浪费性能
+    })
+}
 
 
 
@@ -115,7 +130,12 @@ export default class Store {
     // 第一步数据格式化
     // 第二步安装,把他们存在我们需要的变量上 
     // 第三步 给容器添加对应的状态
-
+    _withCommit(fn) { // 切片
+        let commiting = this._commiting; // 老师告诉的逻辑: 执行前是true,执行完后变为false.  源码里的逻辑是可以实现这个功能,但是还可以实现别的功能.
+        this._commiting = true;
+        fn();
+        this._commiting = commiting;
+    }
     constructor(options) {
         let store = this;
         // { state,getter,mutations,actions,modules }
@@ -125,6 +145,14 @@ export default class Store {
         store._wrappedGetters = Object.create(null)
         store._mutations = Object.create(null)
         store._actions = Object.create(null)
+
+        this.strict = options.strict || false; // 表示是不是严格模式
+        this._commiting = false; // 默认提交是false,只有正在提交的时候才是提交
+        // 调用mutation的时候,要写同步代码 这个是前提
+        // 在mutation调用之前标识一个状态 _commiting = true
+        // 开始调用mutation =>  调用过程中,我就监控这个状态,如果当前这个状态变化的时候,这个commiting是true说明是同步更改的. 但是调用过程中已经变为false,说明同步代码已经结束了,目前处理异步流程,就抛错,说明有问题.
+        // 调用结束后,改为false.
+
 
 
 
@@ -141,13 +169,15 @@ export default class Store {
     get state() {
         return this._state.data
     }
-    commit = (type,payload) => {
-        let entry =   this._mutations[type] || []
-        entry.forEach(handler=>handler(payload))
+    commit = (type, payload) => {
+        let entry = this._mutations[type] || [];
+        this._withCommit(() => { // 相当于修改了commiting这个参数为true,执行完后变为false.
+            entry.forEach(handler => handler(payload))
+        })
     }
-    dispatch = (type,payload) => {
-        let entry =   this._actions[type] || [] // entry可能是多个
-        return Promise.all(entry.map(handler=>handler(payload)))// 等待promise完成
+    dispatch = (type, payload) => {
+        let entry = this._actions[type] || [] // entry可能是多个
+        return Promise.all(entry.map(handler => handler(payload))) // 等待promise完成
     }
     install(app, injectKey) {
         app.provide(injectKey || storeKey, this) // 可以不用app.provide,使用provide() ,因为也可以从vue里解构出来

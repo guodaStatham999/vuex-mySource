@@ -1,7 +1,7 @@
 import { createStore } from '@/vuex'
 
 export default createStore({
-  // strict: true,
+  strict: true, // 不允许用户非法修改状态,(只能在mutation里修改,否则就会发生异常)
   state: { // 组件中的data
     count: 1,
     depict: '外层'
