@@ -11,6 +11,7 @@ export default class ModuleCollection{
     }
     register(rawModule, path){
         let newModule = new Module(rawModule); // 把传入的参数进行格式化
+        // register.newModule = newModule // 
         if(path.length == 0){ // 是一个根目录
             // 如果path数组是个空数组,就说明是根目录
             this.root = newModule;
@@ -42,6 +43,7 @@ export default class ModuleCollection{
 
         
         // console.log(this.root);
+        return newModule
     }
     getNamespaced(path){
         // 就是树的遍历,每次path都是外层installModule递归出来的路径,所以直接使用就行?

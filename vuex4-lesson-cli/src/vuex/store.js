@@ -45,7 +45,11 @@ function installModule(store, rootState, path, module) { // 安装也是递归�
         // 依旧是刚才的思路,其实就是一个数组取最后一个人参数作为父亲,如果是只有一个参数,就会被截取掉,然后使用默认值,再后面会给父亲的children重新赋值.
         let pathSlice = path.slice(0, -1)
         let parentState = pathSlice.reduce((state, key) => state[key], rootState)
-        parentState[path[path.length - 1]] = module.state; // 把父级的[path[path.length-1]](没读懂,需要debugger一下) 从新复制
+
+        store._withCommit(() => {
+            parentState[path[path.length - 1]] = module.state; // 把父级的[path[path.length-1]](没读懂,需要debugger一下) 从新复制
+
+        })
     }
 
 
@@ -207,6 +211,20 @@ export default class Store {
     install(app, injectKey) {
         app.provide(injectKey || storeKey, this) // 可以不用app.provide,使用provide() ,因为也可以从vue里解构出来
         app.config.globalProperties.$store = this; // => Vue.prototype.$store 就是把实例放到了全局上. ****这样的话就不会有命名空间了****
+    }
+    registerModule(path, rawModule) {
+        if (typeof path === 'string') path = [path]
+        let store = this;
+        // 要在原有的模块上,新增加一个
+        let newModule = store._modules.register(rawModule, path) // 把模块注册到父级上面
+        // 把模块安装上
+
+
+
+        installModule(store, store.state, path, newModule)
+
+
+        // 重置状态
     }
 }
 
