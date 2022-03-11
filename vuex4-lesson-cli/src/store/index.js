@@ -28,7 +28,13 @@ let store = createStore({
   getters: { // vuex4没有实现这个功能
     double(state) {
       return state.count * 2
-    }
+    },
+    double2(state) {
+      return state.count * 2
+    },
+    double3(state) {
+      return state.count * 2
+    },
   },
   mutations: {
     add(state, payload) {
@@ -83,6 +89,29 @@ let store = createStore({
           state.count += payload
         }
       },
+      modules: { // registerModule是动态添加模块
+        bGrandson: {
+          namespaced:true,
+            state: { bGrandsonCount: 100,depict:'孙子1' },
+            mutations: {
+                bGrandsonAdd(state, payload) {
+                    state.cGrandsonCount += payload
+                }
+            },
+            actions: {
+              BasyncGrandsonAdd({
+                commit
+              }, payload) {
+                return new Promise((resolve, reject) => {
+                  setTimeout(() => {
+                    resolve()
+                    commit('add', payload)
+                  }, 1000)
+                })
+              }
+            },
+        }
+    }
     },
   }
 })

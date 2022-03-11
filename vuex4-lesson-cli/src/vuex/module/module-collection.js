@@ -11,7 +11,6 @@ export default class ModuleCollection{
     }
     register(rawModule, path){
         let newModule = new Module(rawModule); // 把传入的参数进行格式化
-        // register.newModule = newModule // 
         if(path.length == 0){ // 是一个根目录
             // 如果path数组是个空数组,就说明是根目录
             this.root = newModule;
@@ -21,7 +20,7 @@ export default class ModuleCollection{
 
             // reduce有循环就使用最后的返回参数--永远使用最后一次返回的这个比较重要 ,也就是倒数第二次的父亲/或者 没有循环就是使用默认值
             let parent = pathSlice.reduce((module,current)=>{ // 如果只是一个孩子,reduce的结果就是默认值this.root(最外层)
-                let res = module.getChild(current)
+                let res = module.getChild(current) // 这个module第一次进来是this.root,所以会有getChild方法. 
                 return res // 如果有pathSlice就会使用倒数第二个参数-也就是孩子的父亲. 如果是个空数组,就会使用根目录-this.root
             },this.root)
 

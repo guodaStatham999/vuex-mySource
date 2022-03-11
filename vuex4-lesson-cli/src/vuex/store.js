@@ -38,16 +38,19 @@ function installModule(store, rootState, path, module) { // 安装也是递归�
     let isRoot = !path.length; // 如果是空数组,说明是根
 
     let nameSpaced = store._modules.getNamespaced(path); // [a,c] 如果当前是c,就取出来a是否有命名空间
-    console.log(nameSpaced);
 
 
-    if (!isRoot) {
+    if (!isRoot) {   
         // 依旧是刚才的思路,其实就是一个数组取最后一个人参数作为父亲,如果是只有一个参数,就会被截取掉,然后使用默认值,再后面会给父亲的children重新赋值.
         let pathSlice = path.slice(0, -1)
-        let parentState = pathSlice.reduce((state, key) => state[key], rootState)
+        let parentState = pathSlice.reduce((state, key) => {
+            console.log(state[key]);
+            return state[key]
+        }, rootState)
 
         store._withCommit(() => {
-            parentState[path[path.length - 1]] = module.state; // 把父级的[path[path.length-1]](没读懂,需要debugger一下) 从新复制
+            let parentPath = path[path.length - 1]
+            parentState[parentPath] = module.state; // 状态从新赋值-从父级.当前路径(也就是自己) 
 
         })
     }
@@ -110,12 +113,12 @@ function resetStoreState(store, state) {
     })
 
     if (store.strict) { // 如果是严格模式,就开启严格模式
-        ebableStrictMode(store)
+        enableStrictMode(store)
     }
 }
 
 
-function ebableStrictMode(store) {
+function enableStrictMode(store) {
     watch(() => store._state.data, () => {
         // 监控store._state.data数据变化,变化后执行第二个函数
         // watch默认监控一层,需要修改参数. watch是异步监控,需要修改参数改为同步
@@ -141,10 +144,11 @@ export default class Store {
         this._commiting = commiting;
     }
     constructor(options) {
+        console.log(this);
         let store = this;
         // { state,getter,mutations,actions,modules }
         store._modules = new ModuleCollection(options); // 格式化为一个树
-
+        
         // {add:[fn,fn,多个方法]} 发布订阅模式,等到执行的时候找到属性名去循环执行
         store._wrappedGetters = Object.create(null)
         store._mutations = Object.create(null)
@@ -165,7 +169,6 @@ export default class Store {
         // 里面把store._modules.root的每一层的state都摘出来,放到store._modules.root.state里
         installModule(store, state, [], store._modules.root) // 总思路: 给store添加状态,先找到根状态,然后一层一层的插入 第一个参数: 后期修改的参数都会定义到store里 第二个参数,根目录状态,会添加到第一个参数里 第三个参数: 用来递归的数组,记录父子关系 第四个参数: 开始递归的起点
 
-        console.log(store, state);
 
         // 定义响应式数据
         resetStoreState(store, state);
@@ -195,10 +198,14 @@ export default class Store {
     }
 
     commit = (type, payload) => {
+        console.log(this);
         let entry = this._mutations[type] || [];
         this._withCommit(() => { // 相当于修改了commiting这个参数为true,执行完后变为false.
             entry.forEach(handler => handler(payload))
         })
+
+
+        // 这个是插件部分,每次修改数据完成后,都要做通知操作
         this._subscribes.forEach(sub => sub({
             type,
             payload
@@ -225,6 +232,7 @@ export default class Store {
 
 
         // 重置状态
+        resetStoreState(store, store.state);
     }
 }
 
